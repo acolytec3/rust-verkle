@@ -3,24 +3,24 @@ use wasm_bindgen::prelude::*;
 use crate::{BareMetalDiskDb, BareMetalKVDb};
 
 
-#[wasm_bindgen(module="./db.js")]
+#[wasm_bindgen(module="db.js")]
 extern "C" {
-    type jsKVDB;
+    pub type jsKVDB;
 
     #[wasm_bindgen(constructor)]
-    fn from_path() -> jsDB;
+    pub fn from_path() -> jsKVDB;
 
     #[wasm_bindgen(constructor)]
-    fn new() -> jsKVDB;
+    pub fn new() -> jsKVDB;
 
     #[wasm_bindgen(method)]
-    fn fetch(this: &jsKVDB, key: [u8]) -> Option<Vec<u8>>;
+    pub fn fetch(this: &jsKVDB, key: [u8]) -> Option<Vec<u8>>;
 
     #[wasm_bindgen(method)]
-    fn batch_put(this: &jsKVDB, key: &[u8], val: &[u8]);
+    pub fn batch_put(this: &jsKVDB, key: &[u8], val: &[u8]);
 
     #[wasm_bindgen(method)]
-    fn write(this: &jsKVDB, keys: <Vec<u8>>, val: <Vec<u8>>);
+    pub fn write(this: &jsKVDB, keys: Vec<u8>, val: Vec<u8>);
 }
 
 pub struct WriteBatcher {
