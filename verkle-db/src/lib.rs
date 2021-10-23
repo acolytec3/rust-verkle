@@ -12,6 +12,10 @@ pub use sled_impl::DB as SledDb;
 mod rocksdb_impl;
 #[cfg(feature = "rocks_db")]
 pub use rocksdb_impl::DB as RocksDb;
+#[cfg(feature = "js_db")]
+mod jsdb_impl;
+#[cfg(feature = "js_db")]
+pub use jsdb_impl::DB as JSDb;
 
 // Bare metal database assumes the most basic functionality for a key value database
 pub trait BareMetalKVDb {
