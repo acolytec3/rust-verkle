@@ -4,6 +4,9 @@
 
 This is a proof of concept implementation of Verkle Tries. Any and all mistakes made are mine and are not reflective of the protocol.
 
+## WASM Compilation target
+
+Use `wasm-pack build --target web` from `./verkle-trie` to compile for WASM (doesn't currently work)
 ## Note on Performance
 
 - This new code currently has less benchmarks
