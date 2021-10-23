@@ -2,7 +2,6 @@ use wasm_bindgen::prelude::*;
 
 use crate::{BareMetalDiskDb, BareMetalKVDb};
 
-
 #[wasm_bindgen(module="db.js")]
 extern "C" {
     pub type jsKVDB;
@@ -14,7 +13,7 @@ extern "C" {
     pub fn new() -> jsKVDB;
 
     #[wasm_bindgen(method)]
-    pub fn fetch(this: &jsKVDB, key: [u8]) -> Option<Vec<u8>>;
+    pub fn fetch(this: &jsKVDB, key: &[u8]) -> Option<Vec<u8>>;
 
     #[wasm_bindgen(method)]
     pub fn batch_put(this: &jsKVDB, key: &[u8], val: &[u8]);
@@ -55,23 +54,22 @@ impl BareMetalKVDb for jsKVDB {
 
 use crate::{BatchDB, BatchWriter};
 
-use WriteBatcher as WriteBatch;
-impl BatchWriter for WriteBatcher {
+impl BatchWriter for jsKVDB {
     fn new() -> Self {
         let batchWriter = jsKVDB::new();
         batchWriter
     }
 
-    fn batch_put(self, key: &[u8], val: &[u8]) {
+    fn batch_put(&mut self, key: &[u8], val: &[u8]) {
         self.batch_put(key, val)
     }
 }
 
 use jsKVDB as DB;
 impl BatchDB for DB {
-    type BatchWrite = WriteBatch;
+    type BatchWrite = BatchWriter;
 
-    fn flush(self, batch: Self::BatchWrite) {
-        self.write(batch);
+    fn flush(&mut self, batch: Self::BatchWrite) {
+        self.write(batch::keys, batch::vals);
     }
 }
