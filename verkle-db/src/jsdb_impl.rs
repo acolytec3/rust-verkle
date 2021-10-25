@@ -1,6 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 use crate::{BareMetalDiskDb, BareMetalKVDb};
+use js_sys;
 
 #[wasm_bindgen(module="db.js")]
 extern "C" {
@@ -13,18 +14,13 @@ extern "C" {
     pub fn new() -> jsKVDB;
 
     #[wasm_bindgen(method)]
-    pub fn fetch(this: &jsKVDB, key: &[u8]) -> Option<Vec<u8>>;
+    pub fn jsfetch(this: &jsKVDB, key: &[u8]) -> Option<Vec<u8>>;
 
     #[wasm_bindgen(method)]
-    pub fn batch_put(this: &jsKVDB, key: &[u8], val: &[u8]);
+    pub fn jsbatch_put(this: &jsKVDB, keys: Vec<js_sys::Uint8Array>, vals: Vec<js_sys::Uint8Array>);
 
     #[wasm_bindgen(method)]
-    pub fn write(this: &jsKVDB, keys: Vec<u8>, val: Vec<u8>);
-}
-
-pub struct WriteBatcher {
-    keys: Vec<u8>,
-    vals: Vec<u8>
+    pub fn write(this: &jsKVDB, batch: &[u8]);
 }
 
 impl BareMetalDiskDb for jsKVDB {
@@ -42,7 +38,7 @@ impl BareMetalDiskDb for jsKVDB {
 
 impl BareMetalKVDb for jsKVDB {
     fn fetch(&self, key: &[u8]) -> Option<Vec<u8>> {
-        let vector = self.fetch(key);
+        let vector = self.jsfetch(key);
         vector
     }
     // Create a database given the default path
@@ -54,22 +50,35 @@ impl BareMetalKVDb for jsKVDB {
 
 use crate::{BatchDB, BatchWriter};
 
-impl BatchWriter for jsKVDB {
-    fn new() -> Self {
-        let batchWriter = jsKVDB::new();
-        batchWriter
+pub struct WriteBatch {
+    keys : Vec<Vec<u8>>,
+    values : Vec<Vec<u8>>,
+  }
+
+impl BatchWriter for WriteBatch {
+fn new() -> Self {
+    WriteBatch {
+    keys : Vec::new(),
+    values : Vec::new(),
     }
+}
 
     fn batch_put(&mut self, key: &[u8], val: &[u8]) {
-        self.batch_put(key, val)
+    self.keys.push(key.to_vec());
+    self.values.push(val.to_vec());
     }
 }
 
 use jsKVDB as DB;
+
 impl BatchDB for DB {
-    type BatchWrite = BatchWriter;
+    type BatchWrite = WriteBatch;
 
     fn flush(&mut self, batch: Self::BatchWrite) {
-        self.write(batch::keys, batch::vals);
+        let keys = batch.keys;
+        let jskeys: Vec<_> = keys.into_iter().map(|key| js_sys::Uint8Array::from(&key[..])).collect();
+        let vals = batch.values;
+        let jsvals: Vec<_> = vals.into_iter().map(|val| js_sys::Uint8Array::from(&val[..])).collect();
+        self.jsbatch_put(jskeys, jsvals);
     }
 }
